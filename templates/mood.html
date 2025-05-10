@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mood Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #f0f4f8, #dfe7ec);
+      color: #333;
+      padding: 30px;
+    }
+    .navbar {
+            background-color: #4db6ac;
+        }
+
+        .navbar .nav-link,
+        .navbar-brand {
+            color: black !important;
+            font-weight: 500;
+        }
+
+        .navbar .nav-link:hover {
+            text-decoration: underline;
+        }
+    .main-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .form-container, .quote-container {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+    }
+
+    .quote-box {
+      background: #e0f7fa;
+      border-left: 5px solid #00acc1;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      min-height: 80px;
+    }
+
+    .quote-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .quote-nav button {
+      width: 48%;
+    }
+
+    canvas {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon text-white"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">🏠 Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('blog') }}">❤️Blogs</a>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="main-container">
+  <!-- Mood Form Section -->
+  <div class="form-container">
+    <h2>Welcome, {{ current_user.username }}</h2>
+    <form method="POST">
+      <div class="mb-3">
+        <label for="mood_input" class="form-label">How are you feeling?</label>
+        <input type="text" name="mood" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="note_input" class="form-label">Any notes?</label>
+        <textarea name="note" class="form-control"></textarea>
+      </div>
+      <button type="submit" class="btn btn-success">Submit Mood</button>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% if recommendation %}
+      <div class="recommendation-box mt-3">
+        <strong>Recommendation:</strong> {{ recommendation|safe }}
+      </div>
+    {% endif %}
+
+    {% if technique %}
+      <div class="alert alert-info mt-2">
+        <strong>Meditation Recommendation:</strong> {{ technique }}
+      </div>
+    {% endif %}
+
+    {% if exercises %}
+      <h4 class="mt-4">Recommended Exercises:</h4>
+      <ul class="list-group">
+        {% for exercise in exercises %}
+          <li class="list-group-item"><strong>{{ exercise.name }}</strong>: {{ exercise.instructions }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <h4 class="mt-5">Your Mood History</h4>
+    <canvas id="moodChart" width="400" height="200"></canvas>
+
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger mt-4">Logout</a>
+  </div>
+
+  <!-- Quote Section -->
+  <div class="quote-container">
+    <h4>🌟 Motivational Quotes</h4>
+    <p id="quoteText">Click below to get inspired!</p>
+    <button onclick="getQuote()" class="btn btn-info btn-sm mb-3">Fetch New Quote</button>
+    <button onclick="saveQuote()" class="btn btn-warning btn-sm mb-3">Save Quote</button>
+
+    <h5>Saved Quotes</h5>
+    <div id="savedQuoteBox">
+      <div class="quote-box" id="savedQuote1">No saved quotes yet.</div>
+      <div class="quote-box" id="savedQuote2"></div>
+    </div>
+
+    <div class="quote-nav">
+      <button class="btn btn-secondary" onclick="prevQuotes()">← Prev</button>
+      <button class="btn btn-secondary" onclick="nextQuotes()">Next →</button>
+    </div>
+      <h2 class="mt-4">📝 Recent Moods & Notes</h2>
+<table class="table table-striped table-bordered">
+    <thead class="thead-dark">
+        <tr>
+            <th>Date</th>
+            <th>Mood</th>
+            <th>Note</th>
+          <th> </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in moods.items %}
+        <tr>
+            <td>{{ m.timestamp.strftime('%Y-%m-%d ') }}</td>
+            <td>{{ m.mood.title() }}</td>
+            <td>
+                {{ m.note[:25] }}{% if m.note and m.note|length > 25 %}...{% endif %}
+            </td>
+          <td><form action="{{ url_for('delete_mood', mood_id=m.id) }}" method="POST" style="display:inline;">
+    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this mood entry?');">
+        Delete
+    </button>
+</form>
+</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination Controls -->
+<nav aria-label="Mood navigation">
+  <ul class="pagination justify-content-center">
+    {% if moods.has_prev %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('mood', page=moods.prev_num) }}">Previous</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" tabindex="-1">Previous</a>
+    </li>
+    {% endif %}
+
+    <li class="page-item disabled">
+      <span class="page-link">Page {{ moods.page }} of {{ moods.pages }}</span>
+    </li>
+
+    {% if moods.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('mood', page=moods.next_num) }}">Next</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" tabindex="-1">Next</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  let savedQuotes = [];
+  let quoteIndex = 0;
+
+  function getQuote() {
+    fetch('/quote')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('quoteText').innerText = data.quote;
+      });
+  }
+
+  function saveQuote() {
+    const quote = document.getElementById('quoteText').innerText;
+    fetch('/save_quote', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `quote=${encodeURIComponent(quote)}`
+    }).then(() => {
+      alert('Quote saved!');
+      fetchSavedQuotes(); // refresh saved quotes
+    });
+  }
+
+  function fetchSavedQuotes() {
+    fetch('/saved_quotes')
+      .then(res => res.json())
+      .then(data => {
+        savedQuotes = data;
+        quoteIndex = 0;
+        renderSavedQuotes();
+      });
+  }
+
+  function renderSavedQuotes() {
+    const box1 = document.getElementById('savedQuote1');
+    const box2 = document.getElementById('savedQuote2');
+
+    box1.innerText = savedQuotes[quoteIndex] || 'No quote';
+    box2.innerText = savedQuotes[quoteIndex + 1] || '';
+  }
+
+  function prevQuotes() {
+    if (quoteIndex >= 2) {
+      quoteIndex -= 2;
+      renderSavedQuotes();
+    }
+  }
+
+  function nextQuotes() {
+    if (quoteIndex + 2 < savedQuotes.length) {
+      quoteIndex += 2;
+      renderSavedQuotes();
+    }
+  }
+
+  // Mood Chart
+  const ctx = document.getElementById('moodChart').getContext('2d');
+  const moodChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ mood_labels | tojson }},
+      datasets: [{
+        label: 'Mood Over Time',
+        data: {{ mood_scores | tojson }},
+        fill: true,
+        borderColor: '#4db6ac',
+        backgroundColor: 'rgba(77, 182, 172, 0.2)',
+        tension: 0.3,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          title: {
+            display: true,
+            text: 'Mood Level (1=Low, 5=High)'
+          },
+          min: 1,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            callback: function(value) {
+              const labels = {
+                1: "Sad/Angry",
+                2: "Anxious",
+                3: "Neutral",
+                4: "Excited",
+                5: "Happy"
+              };
+              return labels[value] || value;
+            }
+          }
+        }
+      }
+    }
+  });
+
+
+  // Load saved quotes on page load
+  fetchSavedQuotes();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoodMingle - Home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom right, #f4f7fa, #dbe9f4);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #4db6ac;
+      padding: 15px 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: flex-end;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul li, nav ul a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+
+    nav ul a:hover {
+      color: #004d40;
+    }
+
+    main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      color: #00796b;
+    }
+
+    p {
+      font-size: 1.2rem;
+      color: #555;
+    }
+
+    .cta-button {
+      margin-top: 30px;
+      padding: 12px 25px;
+      background-color: #00796b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      text-decoration: none;
+    }
+
+    .cta-button:hover {
+      background-color: #004d40;
+    }
+
+    footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 0.9rem;
+      background-color: #e0f2f1;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav>
+      <ul>
+        {% if current_user.is_authenticated %}
+          <li><a href="{{ url_for('mood') }}">Track Mood</a></li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        {% else %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('register') }}">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Welcome to MoodMingle</h1>
+    {% if current_user.is_authenticated %}
+      <p>Hello, {{ current_user.username }}! Start tracking your mood and feel better every day 💚</p>
+      <a href="{{ url_for('mood') }}" class="cta-button">Go to Mood Tracker</a>
+     <a href="{{ url_for('blog') }}" class="cta-button">Blogs</a>
+    {% else %}
+      <p>Please login or register to join the supportive MoodMingle community </p>
+      <a href="{{ url_for('register') }}" class="cta-button">Join Now</a>
+    {% endif %}
+  </main>
+
+  <footer>
+    &copy; 2025 MoodMingleAditi. All rights reserved.
+  </footer>
+
+</body>
+</html>

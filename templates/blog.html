@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MoodMingle | Anonymous Stories</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #f0f4f8, #dceefb);
+            font-family: "Segoe UI", sans-serif;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #4db6ac;
+        }
+
+        .navbar .nav-link,
+        .navbar-brand {
+            color: black !important;
+            font-weight: 500;
+        }
+
+        .navbar .nav-link:hover {
+            text-decoration: underline;
+        }
+
+        h2 {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .post-form {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #ccc;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .card:hover {
+            transform: scale(1.015);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+        }
+
+        .card-body {
+            background: #ffffff;
+            border-radius: 1rem 1rem 0 0;
+            padding: 1rem 1.25rem;
+        }
+
+        .card-footer {
+            background-color: #f6f9fc;
+            border-radius: 0 0 1rem 1rem;
+            padding: 0.75rem 1.25rem;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .btn-primary {
+            background-color: #6c5ce7;
+            border-color: #6c5ce7;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a4dcf;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            border-color: #27ae60;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .list-group-item {
+            border: none;
+            background: #f9f9f9;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#">MoodMingle</a>
+        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon text-white"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">🏠 Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('mood') }}">😊 Mood</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">🚪 Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container mt-5 mb-5">
+    <h2 class="text-center mb-4">Share Your Story <small class="text-muted">(Stay Anonymous)</small></h2>
+
+    <!-- Anonymous Post Form -->
+    <div class="post-form mb-5">
+        <form method="POST">
+            <textarea name="content" rows="3" class="form-control" placeholder="Write what you're going through..." required></textarea>
+            <button type="submit" class="btn btn-success mt-2">Post Anonymously</button>
+        </form>
+    </div>
+
+    <!-- Posts Grid -->
+    <div class="row g-4">
+        {% for post in posts %}
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <p>{{ post.content }}</p>
+                    <small class="timestamp">{{ post.timestamp.strftime('%b %d, %Y %I:%M %p') }}</small>
+                </div>
+                <div class="card-footer">
+                    <!-- Toggle Comments -->
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
+                        💬 View Comments ({{ post.comments|length }})
+                    </button>
+
+                    <div class="collapse mt-3" id="comments-{{ post.id }}">
+                        <form action="{{ url_for('comment', post_id=post.id) }}" method="POST" class="d-flex mb-2">
+                            <input type="text" name="comment" class="form-control me-2" placeholder="Write a comment..." required>
+                            <button type="submit" class="btn btn-sm btn-primary">Comment</button>
+                        </form>
+
+                        <ul class="list-group">
+                            {% for comment in post.comments %}
+                            <li class="list-group-item">
+                                {{ comment.content }}
+                                <br>
+                                <small class="timestamp">{{ comment.timestamp.strftime('%b %d %I:%M %p') }}</small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
