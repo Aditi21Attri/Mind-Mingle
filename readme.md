@@ -46,9 +46,7 @@ Visit [http://localhost:8000](http://localhost:8000) in your browser (update por
 
 Contributions are welcome! Please open an issue or submit a pull request for suggestions and improvements.
 
-## License
 
-[Specify the license here, e.g., MIT. Update this section once a license is chosen.]
 
 ## Author
 
