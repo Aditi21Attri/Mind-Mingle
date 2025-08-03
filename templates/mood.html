@@ -61,9 +61,116 @@
     canvas {
       margin-top: 40px;
     }
+
+    /* Dark Mode Styles */
+    .dark-mode {
+      background: linear-gradient(to bottom right, #1a1a1a, #2d2d2d) !important;
+      color: #f0f0f0 !important;
+    }
+
+    .dark-mode .form-container, 
+    .dark-mode .quote-container {
+      background: #2d2d2d !important;
+      color: #f0f0f0 !important;
+      border: 1px solid #444;
+    }
+
+    .dark-mode .form-control, 
+    .dark-mode .table {
+      background: #3d3d3d !important;
+      color: #f0f0f0 !important;
+      border-color: #555 !important;
+    }
+
+    .dark-mode .quote-box {
+      background: #1e3a3a !important;
+      border-left-color: #4db6ac !important;
+    }
+
+    /* Quick Mood Buttons */
+    .mood-buttons .mood-btn {
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .mood-buttons .mood-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .mood-buttons .mood-btn.active {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(77, 182, 172, 0.5);
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: #4db6ac;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      background: #26a69a;
+    }
+
+    /* Insights Modal */
+    .insights-section {
+      display: none;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .dark-mode .insights-section {
+      background: #2d2d2d;
+      color: #f0f0f0;
+    }
+
+    .insight-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      border-left: 4px solid #4db6ac;
+    }
+
+    .dark-mode .insight-card {
+      background: #3d3d3d;
+    }
+
+    /* Voice Input Animation */
+    .voice-recording {
+      animation: pulse 1.5s infinite;
+      background-color: #ff4444 !important;
+      color: white !important;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+<!-- Theme Toggle Button -->
+<button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg">
     <div class="container">
@@ -78,6 +185,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('blog') }}">❤️Blogs</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('ai_chat') }}">🤖 AI Chat</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showMoodInsights()">📊 Insights</a>
+                </li>
 
             </ul>
         </div>
@@ -88,10 +201,28 @@
   <!-- Mood Form Section -->
   <div class="form-container">
     <h2>Welcome, {{ current_user.username }}</h2>
-    <form method="POST">
+    
+    <!-- Quick Mood Buttons -->
+    <div class="quick-mood-section mb-4">
+      <h5>Quick Mood Entry</h5>
+      <div class="mood-buttons d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="btn btn-outline-success mood-btn" onclick="setQuickMood('😊', 'happy')">😊 Happy</button>
+        <button type="button" class="btn btn-outline-primary mood-btn" onclick="setQuickMood('😐', 'neutral')">😐 Neutral</button>
+        <button type="button" class="btn btn-outline-warning mood-btn" onclick="setQuickMood('😰', 'anxious')">😰 Anxious</button>
+        <button type="button" class="btn btn-outline-danger mood-btn" onclick="setQuickMood('😢', 'sad')">😢 Sad</button>
+        <button type="button" class="btn btn-outline-dark mood-btn" onclick="setQuickMood('😠', 'angry')">😠 Angry</button>
+        <button type="button" class="btn btn-outline-secondary mood-btn" onclick="setQuickMood('😫', 'stressed')">😫 Stressed</button>
+      </div>
+      <small class="text-muted">Click for quick entry or use the form below for detailed input</small>
+    </div>
+
+    <form method="POST" id="moodForm">
       <div class="mb-3">
-        <label for="mood_input" class="form-label">How are you feeling?</label>
-        <input type="text" name="mood" class="form-control" required>
+        <label for="mood_input" class="form-label">How are you feeling? <small class="text-muted">(or use quick buttons above)</small></label>
+        <div class="input-group">
+          <input type="text" name="mood" id="mood_input" class="form-control" placeholder="Describe your feelings..." required>
+          <button type="button" class="btn btn-outline-secondary" onclick="startVoiceInput()" title="Voice Input">🎤</button>
+        </div>
       </div>
       <div class="mb-3">
         <label for="note_input" class="form-label">Any notes?</label>
@@ -106,9 +237,43 @@
       {% endfor %}
     {% endwith %}
 
+    {% if ai_response %}
+      <div class="ai-response-box mt-3">
+        <h5 style="color: #4db6ac;">🤖 AI Counselor Response:</h5>
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border-left: 4px solid #4db6ac;">
+          {{ ai_response }}
+        </div>
+        <small class="text-muted">Want to continue the conversation? <a href="{{ url_for('ai_chat') }}">Visit AI Chat</a></small>
+      </div>
+    {% endif %}
+
+    <!-- Insights Section -->
+    <div class="insights-section" id="insightsSection">
+      <h5>📊 Your Mood Insights</h5>
+      <div id="insightsContent">
+        <div class="insight-card">
+          <strong>🔄 Pattern Analysis:</strong>
+          <p id="patternInsight">Loading your mood patterns...</p>
+        </div>
+        <div class="insight-card">
+          <strong>📈 Progress Tracking:</strong>
+          <p id="progressInsight">Analyzing your emotional wellness journey...</p>
+        </div>
+        <div class="insight-card">
+          <strong>💡 Personalized Tips:</strong>
+          <p id="tipsInsight">Generating recommendations based on your mood history...</p>
+        </div>
+        <div class="insight-card">
+          <strong>🎯 Weekly Summary:</strong>
+          <p id="weeklyInsight">Calculating your week's emotional overview...</p>
+        </div>
+      </div>
+      <button onclick="hideInsights()" class="btn btn-secondary btn-sm mt-2">Hide Insights</button>
+    </div>
+
     {% if recommendation %}
       <div class="recommendation-box mt-3">
-        <strong>Recommendation:</strong> {{ recommendation|safe }}
+        <strong>Meditation Recommendation:</strong> {{ recommendation|safe }}
       </div>
     {% endif %}
 
@@ -315,6 +480,200 @@
 
   // Load saved quotes on page load
   fetchSavedQuotes();
+
+  // Enhanced JavaScript Functions for Phase 1 Features
+
+  // Quick Mood Selection
+  function setQuickMood(emoji, mood) {
+    document.getElementById('mood_input').value = `${emoji} ${mood}`;
+    
+    // Visual feedback
+    document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Auto-submit option (optional)
+    // document.getElementById('moodForm').submit();
+  }
+
+  // Voice Input Functionality
+  let recognition;
+  let isRecording = false;
+
+  function startVoiceInput() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech recognition not supported in your browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    const voiceBtn = event.target;
+    const moodInput = document.getElementById('mood_input');
+
+    if (!isRecording) {
+      recognition.start();
+      isRecording = true;
+      voiceBtn.classList.add('voice-recording');
+      voiceBtn.innerHTML = '🔴';
+      voiceBtn.title = 'Recording... Click to stop';
+    } else {
+      recognition.stop();
+      isRecording = false;
+      voiceBtn.classList.remove('voice-recording');
+      voiceBtn.innerHTML = '🎤';
+      voiceBtn.title = 'Voice Input';
+    }
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      moodInput.value = transcript;
+      isRecording = false;
+      voiceBtn.classList.remove('voice-recording');
+      voiceBtn.innerHTML = '🎤';
+      voiceBtn.title = 'Voice Input';
+    };
+
+    recognition.onerror = function(event) {
+      console.error('Speech recognition error:', event.error);
+      isRecording = false;
+      voiceBtn.classList.remove('voice-recording');
+      voiceBtn.innerHTML = '🎤';
+      voiceBtn.title = 'Voice Input';
+      alert('Voice recognition error. Please try typing instead.');
+    };
+  }
+
+  // Dark Mode Toggle
+  function toggleDarkMode() {
+    const body = document.body;
+    const themeBtn = document.querySelector('.theme-toggle');
+    
+    body.classList.toggle('dark-mode');
+    
+    if (body.classList.contains('dark-mode')) {
+      themeBtn.innerHTML = '☀️';
+      themeBtn.title = 'Switch to Light Mode';
+      localStorage.setItem('darkMode', 'enabled');
+    } else {
+      themeBtn.innerHTML = '🌙';
+      themeBtn.title = 'Switch to Dark Mode';
+      localStorage.setItem('darkMode', 'disabled');
+    }
+  }
+
+  // Load theme preference on page load
+  function loadThemePreference() {
+    const darkMode = localStorage.getItem('darkMode');
+    const themeBtn = document.querySelector('.theme-toggle');
+    
+    if (darkMode === 'enabled') {
+      document.body.classList.add('dark-mode');
+      themeBtn.innerHTML = '☀️';
+      themeBtn.title = 'Switch to Light Mode';
+    }
+  }
+
+  // Mood Insights Functions
+  function showMoodInsights() {
+    const insightsSection = document.getElementById('insightsSection');
+    insightsSection.style.display = 'block';
+    
+    // Generate insights based on mood data
+    generateMoodInsights();
+  }
+
+  function hideInsights() {
+    document.getElementById('insightsSection').style.display = 'none';
+  }
+
+  function generateMoodInsights() {
+    const moodData = {{ mood_scores | tojson }};
+    const moodLabels = {{ mood_labels | tojson }};
+    
+    // Pattern Analysis
+    const avgMood = moodData.reduce((a, b) => a + b, 0) / moodData.length;
+    const moodTrend = moodData.slice(-7); // Last 7 entries
+    const isImproving = moodTrend[moodTrend.length - 1] > moodTrend[0];
+    
+    document.getElementById('patternInsight').innerHTML = `
+      Your average mood this period is ${avgMood.toFixed(1)}/5. 
+      ${isImproving ? '📈 Your mood is trending upward!' : '📉 Your mood has been declining slightly.'}
+      ${avgMood >= 4 ? ' You\'re doing great!' : avgMood >= 3 ? ' You\'re maintaining well.' : ' Consider reaching out for additional support.'}
+    `;
+
+    // Progress Tracking
+    const recentHappy = moodTrend.filter(mood => mood >= 4).length;
+    const recentSad = moodTrend.filter(mood => mood <= 2).length;
+    
+    document.getElementById('progressInsight').innerHTML = `
+      In your last 7 entries: ${recentHappy} happy days, ${recentSad} difficult days.
+      ${recentHappy > recentSad ? '🎉 More good days than bad!' : '💪 Remember that difficult days don\'t define you.'}
+    `;
+
+    // Personalized Tips
+    const predominantMood = avgMood >= 4 ? 'happy' : avgMood >= 3 ? 'neutral' : avgMood >= 2 ? 'anxious' : 'sad';
+    const tips = {
+      happy: 'Keep up the great energy! Consider sharing your positivity with others or trying gratitude journaling.',
+      neutral: 'You\'re in a stable place. This is a good time to build healthy habits and practice mindfulness.',
+      anxious: 'Try the 5-4-3-2-1 grounding technique or box breathing when anxiety peaks.',
+      sad: 'Be gentle with yourself. Consider reaching out to friends or trying loving-kindness meditation.'
+    };
+    
+    document.getElementById('tipsInsight').innerHTML = tips[predominantMood];
+
+    // Weekly Summary
+    const weeklyAvg = moodTrend.reduce((a, b) => a + b, 0) / moodTrend.length;
+    const moodWords = {
+      5: 'excellent', 4: 'good', 3: 'stable', 2: 'challenging', 1: 'difficult'
+    };
+    
+    document.getElementById('weeklyInsight').innerHTML = `
+      Your week has been ${moodWords[Math.round(weeklyAvg)]} (${weeklyAvg.toFixed(1)}/5). 
+      ${weeklyAvg >= 3 ? '✨ You\'re managing well!' : '🤗 Remember to be patient with yourself during tough times.'}
+    `;
+  }
+
+  // Crisis Detection
+  function checkForCrisisKeywords(text) {
+    const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'don\'t want to live', 'hopeless', 'worthless'];
+    const lowerText = text.toLowerCase();
+    
+    const containsCrisisKeyword = crisisKeywords.some(keyword => lowerText.includes(keyword));
+    
+    if (containsCrisisKeyword) {
+      showCrisisResources();
+    }
+  }
+
+  function showCrisisResources() {
+    const crisisHTML = `
+      <div class="alert alert-danger mt-3" style="border-left: 5px solid #dc3545;">
+        <h5>🆘 Crisis Support Resources</h5>
+        <p><strong>You're not alone. Help is available 24/7:</strong></p>
+        <ul>
+          <li><strong>National Suicide Prevention Lifeline:</strong> 988</li>
+          <li><strong>Crisis Text Line:</strong> Text HOME to 741741</li>
+          <li><strong>International Association for Suicide Prevention:</strong> <a href="https://www.iasp.info/resources/Crisis_Centres/" target="_blank">Find local resources</a></li>
+        </ul>
+        <p>Please reach out to a mental health professional, trusted friend, or family member.</p>
+      </div>
+    `;
+    
+    document.querySelector('.form-container').insertAdjacentHTML('beforeend', crisisHTML);
+  }
+
+  // Enhanced form submission with crisis detection
+  document.getElementById('moodForm').addEventListener('submit', function(e) {
+    const moodText = document.getElementById('mood_input').value;
+    checkForCrisisKeywords(moodText);
+  });
+
+  // Load theme preference when page loads
+  document.addEventListener('DOMContentLoaded', loadThemePreference);
 </script>
 
 </body>

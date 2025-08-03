@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Counselor Chat - Mind Mingle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom right, #f0f4f8, #dfe7ec);
+            color: #333;
+            padding: 20px;
+        }
+
+        .navbar {
+            background-color: #4db6ac;
+        }
+
+        .navbar .nav-link,
+        .navbar-brand {
+            color: black !important;
+            font-weight: 500;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4db6ac, #26a69a);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .ai-message {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .user-message .message-content {
+            background: #4db6ac;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+
+        .user-avatar {
+            background: #26a69a;
+            color: white;
+            order: 2;
+        }
+
+        .ai-avatar {
+            background: #e8f5e8;
+            color: #4db6ac;
+            order: 1;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        }
+        
+        .chat-form {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-form textarea {
+            flex: 1;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        
+        .chat-form button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .chat-form button:hover {
+            background: #218838;
+        }
+        
+        .clear-chat {
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .clear-chat:hover {
+            background: #c82333;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .ai-status {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .nav-link {
+            display: inline-block;
+            margin-right: 15px;
+            color: #007bff;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        
+        .nav-link:hover {
+            background: #f8f9fa;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('mood') }}" class="nav-link">Mood Tracker</a></li>
+                <li><a href="{{ url_for('ai_chat') }}" class="nav-link">AI Chat</a></li>
+                <li><a href="{{ url_for('blog') }}" class="nav-link">Community</a></li>
+                <li><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="chat-container">
+            <h1>💬 Chat with AI Counselor</h1>
+            
+            <div class="ai-status">
+                <strong>🤖 AI Assistant:</strong> I'm here to listen and provide support. Share your thoughts, feelings, or ask for advice. Our conversations are private and supportive.
+                <br><small>Note: This AI provides general support and is not a replacement for professional mental health care.</small>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <a href="{{ url_for('clear_chat') }}" class="clear-chat">Clear Chat History</a>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                {% if conversation %}
+                    {% for exchange in conversation %}
+                        <div class="message user-message">
+                            <div class="message-label">You:</div>
+                            {{ exchange.user }}
+                        </div>
+                        <div class="message ai-message">
+                            <div class="message-label">AI Counselor:</div>
+                            {{ exchange.ai }}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="message ai-message">
+                        <div class="message-label">AI Counselor:</div>
+                        Hello! I'm your AI mental health companion. How are you feeling today? Feel free to share anything that's on your mind.
+                    </div>
+                {% endif %}
+            </div>
+            
+            <form method="POST" class="chat-form">
+                {{ form.hidden_tag() }}
+                {{ form.message(placeholder="Type your message here... Share how you're feeling or ask for advice.", class="form-control") }}
+                {{ form.submit(value="Send", class="btn btn-primary") }}
+            </form>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div style="margin-top: 15px;">
+                        {% for message in messages %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </main>
+
+    <script>
+        // Auto-scroll to bottom of chat
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Auto-resize textarea
+        const textarea = document.querySelector('textarea');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+        
+        // Submit form with Enter (but allow Shift+Enter for new lines)
+        textarea.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.form.submit();
+            }
+        });
+    </script>
+</body>
+</html>

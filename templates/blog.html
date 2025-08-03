@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MoodMingle | Anonymous Stories</title>
+    <title>MoodMingle | Community Stories</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap & Icons -->
@@ -10,176 +10,767 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --accent-color: #6c5ce7;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --bg-secondary: #1a1a1a;
+            --card-bg: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
         body {
-            background: linear-gradient(to bottom right, #f0f4f8, #dceefb);
-            font-family: "Segoe UI", sans-serif;
-            color: #333;
+            background: var(--bg-secondary);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: var(--bg-primary);
+            padding: 4rem 0 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="30" cy="30" r="2"/></g></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
         }
 
         .navbar {
-            background-color: #4db6ac;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(45, 55, 72, 0.95);
         }
 
         .navbar .nav-link,
         .navbar-brand {
-            color: black !important;
+            color: var(--text-primary) !important;
             font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .navbar .nav-link:hover {
-            text-decoration: underline;
+            color: var(--accent-color) !important;
+            transform: translateY(-1px);
         }
 
-        h2 {
-            font-weight: bold;
-            color: #2c3e50;
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--text-primary);
+            color: var(--text-primary);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
         }
 
         .post-form {
-            background-color: white;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .post-form:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .filters-section {
+            background: var(--card-bg);
             padding: 1.5rem;
             border-radius: 1rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            border: 1px solid #ccc;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .mood-filter-btn {
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .mood-filter-btn:hover,
+        .mood-filter-btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+            transform: translateY(-1px);
         }
 
         .card {
-            border: 1px solid #ccc;
-            border-radius: 1rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            background: var(--card-bg);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
         }
 
         .card:hover {
-            transform: scale(1.015);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            z-index: 2;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
         }
 
         .card-body {
-            background: #ffffff;
-            border-radius: 1rem 1rem 0 0;
-            padding: 1rem 1.25rem;
+            padding: 1.5rem;
+            color: var(--text-primary);
         }
 
         .card-footer {
-            background-color: #f6f9fc;
-            border-radius: 0 0 1rem 1rem;
-            padding: 0.75rem 1.25rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
         }
 
-        textarea {
-            resize: none;
-        }
-
-        .btn-primary {
-            background-color: #6c5ce7;
-            border-color: #6c5ce7;
-        }
-
-        .btn-primary:hover {
-            background-color: #5a4dcf;
-        }
-
-        .btn-success {
-            background-color: #2ecc71;
-            border-color: #27ae60;
-        }
-
-        .btn-success:hover {
-            background-color: #27ae60;
-        }
-
-        .list-group-item {
-            border: none;
-            background: #f9f9f9;
-            border-radius: 0.5rem;
+        .mood-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
             margin-bottom: 0.5rem;
         }
 
+        .mood-happy { background: rgba(52, 211, 153, 0.2); color: #059669; }
+        .mood-sad { background: rgba(59, 130, 246, 0.2); color: #2563eb; }
+        .mood-angry { background: rgba(239, 68, 68, 0.2); color: #dc2626; }
+        .mood-anxious { background: rgba(245, 158, 11, 0.2); color: #d97706; }
+        .mood-neutral { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+        .mood-excited { background: rgba(168, 85, 247, 0.2); color: #7c3aed; }
+
+        .post-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .action-btn.liked {
+            color: #e74c3c;
+        }
+
         .timestamp {
-            font-size: 0.8rem;
-            color: #888;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comment-section {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .comment-item {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-box {
+            border-radius: 25px;
+            border: 2px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        .search-box:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+
+        .floating-stats {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--accent-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            font-size: 0.9rem;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .floating-stats {
+                display: none;
+            }
+            
+            .filters-section {
+                padding: 1rem;
+            }
+            
+            .mood-filter-btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
         }
     </style>
 </head>
-<body>
+<body data-theme="light">
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg">
+<nav class="navbar navbar-expand-lg fixed-top">
     <div class="container">
-        <a class="navbar-brand" href="#">MoodMingle</a>
-        <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon text-white"></span>
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="bi bi-heart-pulse"></i> MoodMingle
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav align-items-center">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('home') }}">🏠 Home</a>
+                    <a class="nav-link" href="{{ url_for('home') }}">
+                        <i class="bi bi-house"></i> Home
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('mood') }}">😊 Mood</a>
+                    <a class="nav-link" href="{{ url_for('mood') }}">
+                        <i class="bi bi-emoji-smile"></i> Mood
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('logout') }}">🚪 Logout</a>
+                    <a class="nav-link" href="{{ url_for('ai_chat') }}">
+                        <i class="bi bi-chat-dots"></i> AI Chat
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <i class="bi bi-moon-stars" id="theme-icon"></i>
+                    </button>
+                </li>
+                <li class="nav-item ms-2">
+                    <a class="nav-link" href="{{ url_for('logout') }}">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- Main Content -->
-<div class="container mt-5 mb-5">
-    <h2 class="text-center mb-4">Share Your Story <small class="text-muted">(Stay Anonymous)</small></h2>
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="display-4 fw-bold mb-3">Community Stories</h1>
+        <p class="lead mb-0">Share your journey, connect with others, heal together</p>
+        <small class="d-block mt-2 opacity-75">Your identity stays completely anonymous</small>
+    </div>
+</div>
 
-    <!-- Anonymous Post Form -->
-    <div class="post-form mb-5">
-        <form method="POST">
-            <textarea name="content" rows="3" class="form-control" placeholder="Write what you're going through..." required></textarea>
-            <button type="submit" class="btn btn-success mt-2">Post Anonymously</button>
+<!-- Main Content -->
+<div class="container mt-5 pt-5">
+    
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h6 class="mb-2 fw-bold">
+                    <i class="bi bi-funnel"></i> Filter by Mood
+                </h6>
+                <div class="mood-filters">
+                    <button class="mood-filter-btn active" data-mood="all">All Stories</button>
+                    <button class="mood-filter-btn" data-mood="happy">😊 Happy</button>
+                    <button class="mood-filter-btn" data-mood="sad">😢 Sad</button>
+                    <button class="mood-filter-btn" data-mood="anxious">😰 Anxious</button>
+                    <button class="mood-filter-btn" data-mood="angry">😠 Angry</button>
+                    <button class="mood-filter-btn" data-mood="neutral">😐 Neutral</button>
+                    <button class="mood-filter-btn" data-mood="excited">🤩 Excited</button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="mb-2 fw-bold">
+                    <i class="bi bi-search"></i> Search Stories
+                </h6>
+                <input type="text" class="form-control search-box" id="searchInput" 
+                       placeholder="Search for keywords, feelings, experiences...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Form -->
+    <div class="post-form">
+        <form method="POST" id="postForm">
+            <div class="row">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-pencil-square"></i> Share Your Story
+                    </label>
+                    <textarea name="content" id="postContent" rows="4" class="form-control" 
+                              placeholder="What's on your mind? Share your thoughts, feelings, or experiences..." 
+                              required maxlength="1000"></textarea>
+                    <div class="d-flex justify-content-between mt-2">
+                        <small class="text-muted">Your story will be shared anonymously</small>
+                        <small class="text-muted">
+                            <span id="charCount">0</span>/1000 characters
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-emoji-smile"></i> How are you feeling?
+                    </label>
+                    <select name="mood" class="form-select mb-3" required>
+                        <option value="">Select your mood</option>
+                        <option value="happy">😊 Happy</option>
+                        <option value="sad">😢 Sad</option>
+                        <option value="anxious">😰 Anxious</option>
+                        <option value="angry">😠 Angry</option>
+                        <option value="neutral">😐 Neutral</option>
+                        <option value="excited">🤩 Excited</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                        <i class="bi bi-send"></i> Share Story
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading stories...</p>
+    </div>
+
     <!-- Posts Grid -->
-    <div class="row g-4">
+    <div class="row g-4" id="postsContainer">
         {% for post in posts %}
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
+        <div class="col-lg-6 post-item" data-mood="{{ post.mood if post.mood else 'neutral' }}">
+            <div class="card h-100">
                 <div class="card-body">
-                    <p>{{ post.content }}</p>
-                    <small class="timestamp">{{ post.timestamp.strftime('%b %d, %Y %I:%M %p') }}</small>
+                    {% if post.mood %}
+                    <span class="mood-badge mood-{{ post.mood }}">
+                        {% if post.mood == 'happy' %}😊 Feeling Happy
+                        {% elif post.mood == 'sad' %}😢 Feeling Sad
+                        {% elif post.mood == 'anxious' %}😰 Feeling Anxious
+                        {% elif post.mood == 'angry' %}😠 Feeling Angry
+                        {% elif post.mood == 'excited' %}🤩 Feeling Excited
+                        {% else %}😐 Feeling Neutral{% endif %}
+                    </span>
+                    {% endif %}
+                    
+                    <div class="post-content">{{ post.content }}</div>
+                    
+                    <div class="timestamp">
+                        <i class="bi bi-clock"></i>
+                        {{ post.timestamp.strftime('%b %d, %Y at %I:%M %p') }}
+                    </div>
+                    
+                    <div class="post-actions">
+                        <button class="action-btn like-btn" data-post-id="{{ post.id }}">
+                            <i class="bi bi-heart"></i> 
+                            <span class="like-count">{{ post.likes if post.likes else 0 }}</span>
+                        </button>
+                        <button class="action-btn" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
+                            <i class="bi bi-chat"></i> 
+                            {{ post.comments|length }} Comments
+                        </button>
+                        <button class="action-btn share-btn" data-post-id="{{ post.id }}">
+                            <i class="bi bi-share"></i> Share Support
+                        </button>
+                    </div>
                 </div>
+                
                 <div class="card-footer">
-                    <!-- Toggle Comments -->
-                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
-                        💬 View Comments ({{ post.comments|length }})
-                    </button>
+                    <div class="collapse" id="comments-{{ post.id }}">
+                        <div class="comment-section">
+                            <form action="{{ url_for('comment', post_id=post.id) }}" method="POST" class="d-flex mb-3">
+                                <input type="text" name="comment" class="form-control me-2" 
+                                       placeholder="Share your thoughts or support..." required maxlength="300">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i>
+                                </button>
+                            </form>
 
-                    <div class="collapse mt-3" id="comments-{{ post.id }}">
-                        <form action="{{ url_for('comment', post_id=post.id) }}" method="POST" class="d-flex mb-2">
-                            <input type="text" name="comment" class="form-control me-2" placeholder="Write a comment..." required>
-                            <button type="submit" class="btn btn-sm btn-primary">Comment</button>
-                        </form>
-
-                        <ul class="list-group">
                             {% for comment in post.comments %}
-                            <li class="list-group-item">
-                                {{ comment.content }}
-                                <br>
-                                <small class="timestamp">{{ comment.timestamp.strftime('%b %d %I:%M %p') }}</small>
-                            </li>
+                            <div class="comment-item">
+                                <div class="fw-medium">{{ comment.content }}</div>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i>
+                                    {{ comment.timestamp.strftime('%b %d at %I:%M %p') }}
+                                </small>
+                            </div>
                             {% endfor %}
-                        </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
+    
+    {% if not posts %}
+    <div class="text-center py-5">
+        <i class="bi bi-journal-text display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">No stories yet</h4>
+        <p class="text-muted">Be the first to share your story with the community!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Floating Stats -->
+<div class="floating-stats">
+    <div class="fw-bold mb-2">Community Stats</div>
+    <div><i class="bi bi-journal-text"></i> {{ posts|length }} Stories</div>
+    <div><i class="bi bi-chat"></i> {{ total_comments if total_comments else 0 }} Comments</div>
+    <div><i class="bi bi-people"></i> {{ total_users if total_users else 'Many' }} Members</div>
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Theme Management
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+    const currentTheme = body.getAttribute('data-theme');
+    
+    if (currentTheme === 'light') {
+        body.setAttribute('data-theme', 'dark');
+        themeIcon.className = 'bi bi-sun';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        body.setAttribute('data-theme', 'light');
+        themeIcon.className = 'bi bi-moon-stars';
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Load saved theme
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+    
+    body.setAttribute('data-theme', savedTheme);
+    themeIcon.className = savedTheme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+});
+
+// Character Counter
+const postContent = document.getElementById('postContent');
+const charCount = document.getElementById('charCount');
+
+if (postContent && charCount) {
+    postContent.addEventListener('input', function() {
+        const count = this.value.length;
+        charCount.textContent = count;
+        
+        if (count > 900) {
+            charCount.style.color = '#e74c3c';
+        } else if (count > 700) {
+            charCount.style.color = '#f39c12';
+        } else {
+            charCount.style.color = '#95a5a6';
+        }
+    });
+}
+
+// Mood Filtering
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.mood-filter-btn');
+    const postItems = document.querySelectorAll('.post-item');
+    const searchInput = document.getElementById('searchInput');
+
+    // Mood filtering
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            const selectedMood = this.getAttribute('data-mood');
+            
+            postItems.forEach(item => {
+                const itemMood = item.getAttribute('data-mood');
+                if (selectedMood === 'all' || itemMood === selectedMood) {
+                    item.style.display = 'block';
+                    item.style.animation = 'fadeIn 0.5s ease';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Search functionality
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            postItems.forEach(item => {
+                const content = item.querySelector('.post-content').textContent.toLowerCase();
+                const mood = item.getAttribute('data-mood');
+                
+                if (content.includes(searchTerm) || mood.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+
+// Like functionality with AJAX
+document.querySelectorAll('.like-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const postId = this.getAttribute('data-post-id');
+        const likeCount = this.querySelector('.like-count');
+        const heartIcon = this.querySelector('i');
+        
+        // Make AJAX call to toggle like
+        fetch(`/blog/${postId}/like`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI based on response
+                if (data.liked) {
+                    this.classList.add('liked');
+                    heartIcon.className = 'bi bi-heart-fill';
+                } else {
+                    this.classList.remove('liked');
+                    heartIcon.className = 'bi bi-heart';
+                }
+                
+                likeCount.textContent = data.like_count;
+                
+                // Add animation
+                this.style.animation = 'pulse 0.3s ease';
+                setTimeout(() => {
+                    this.style.animation = '';
+                }, 300);
+            }
+        })
+        .catch(error => {
+            console.error('Error toggling like:', error);
+            // Fallback to original behavior
+            if (this.classList.contains('liked')) {
+                this.classList.remove('liked');
+                heartIcon.className = 'bi bi-heart';
+                likeCount.textContent = Math.max(0, parseInt(likeCount.textContent) - 1);
+            } else {
+                this.classList.add('liked');
+                heartIcon.className = 'bi bi-heart-fill';
+                likeCount.textContent = parseInt(likeCount.textContent) + 1;
+            }
+        });
+    });
+});
+
+// Share functionality
+document.querySelectorAll('.share-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const postId = this.getAttribute('data-post-id');
+        
+        // Simple share functionality
+        if (navigator.share) {
+            navigator.share({
+                title: 'MoodMingle - Community Story',
+                text: 'Check out this inspiring story from our community',
+                url: window.location.href
+            });
+        } else {
+            // Fallback - copy to clipboard
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                // Show feedback
+                const originalIcon = this.querySelector('i').className;
+                this.querySelector('i').className = 'bi bi-check';
+                setTimeout(() => {
+                    this.querySelector('i').className = originalIcon;
+                }, 2000);
+            });
+        }
+    });
+});
+
+// Form submission enhancement
+const postForm = document.getElementById('postForm');
+if (postForm) {
+    postForm.addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const content = document.getElementById('postContent').value.trim();
+        
+        if (content.length < 10) {
+            e.preventDefault();
+            alert('Please write at least 10 characters to share your story.');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sharing...';
+        submitBtn.disabled = true;
+    });
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .post-item {
+        animation: fadeIn 0.6s ease;
+    }
+    
+    .card {
+        transform-origin: center;
+    }
+`;
+document.head.appendChild(style);
+
+// Auto-resize textareas
+document.querySelectorAll('textarea').forEach(textarea => {
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+});
+
+// Crisis detection keywords (frontend warning)
+const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself'];
+const contentTextarea = document.getElementById('postContent');
+
+if (contentTextarea) {
+    contentTextarea.addEventListener('input', function() {
+        const content = this.value.toLowerCase();
+        const hasCrisisKeyword = crisisKeywords.some(keyword => content.includes(keyword));
+        
+        if (hasCrisisKeyword) {
+            showCrisisWarning();
+        }
+    });
+}
+
+function showCrisisWarning() {
+    // Create crisis warning modal or alert
+    const warningHTML = `
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h6><i class="bi bi-exclamation-triangle"></i> We're here to help</h6>
+            <p class="mb-2">If you're going through a difficult time, please reach out for support:</p>
+            <ul class="mb-0">
+                <li>National Suicide Prevention Lifeline: <strong>988</strong></li>
+                <li>Crisis Text Line: Text <strong>HOME</strong> to <strong>741741</strong></li>
+                <li>Emergency Services: <strong>911</strong></li>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert warning before the form
+    const form = document.getElementById('postForm');
+    if (!document.querySelector('.crisis-warning')) {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'crisis-warning mb-3';
+        warningDiv.innerHTML = warningHTML;
+        form.parentNode.insertBefore(warningDiv, form);
+    }
+}
+</script>
 
 </body>
 </html>

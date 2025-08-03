@@ -1,8 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 db = SQLAlchemy()
+
+# Association table for blog likes
+blog_likes = db.Table('blog_likes',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('blog_post_id', db.Integer, db.ForeignKey('blog_post.id'), primary_key=True)
+)
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,14 +38,15 @@ class SavedQuote(db.Model):
     quote = db.Column(db.String(500))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-from datetime import datetime
-
 class BlogPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
+    mood = db.Column(db.String(20), nullable=True)  # happy, sad, anxious, angry, neutral, excited
+    likes = db.Column(db.Integer, default=0)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # stored, but not shown
     comments = db.relationship('Comment', backref='blog', lazy=True)
+    liked_by = db.relationship('User', secondary=blog_likes, backref='liked_posts')
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)

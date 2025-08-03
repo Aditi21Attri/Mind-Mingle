@@ -4,10 +4,10 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Email, Length, EqualTo, ValidationError
 from models import db, User, Mood, SavedQuote, BlogPost
+from models import Comment, blog_likes
 from dbm import sqlite3
 import requests
 from meditation import get_random_meditation
-from models import Comment
 
 #MODEL
 from transformers import pipeline
@@ -225,13 +225,73 @@ emotion_to_mood = {
     'burnout': 'stressed',
     'anxiety': 'stressed'
 }
+
+def preprocess_text_for_emotion(text):
+    """Preprocess text to handle negations and improve emotion detection"""
+    text_lower = text.lower().strip()
+    
+    # Handle explicit negations - if someone says "not happy", they're likely sad
+    negation_patterns = {
+        'not happy': 'sad and unhappy',
+        'not feeling well': 'unwell and sad',
+        'not good': 'bad and sad',
+        'not okay': 'sad and troubled',
+        'not fine': 'sad and troubled',
+        'not great': 'sad and disappointed',
+        'not excited': 'disappointed and sad',
+        'not feeling good': 'unwell and sad',
+        "i'm not": 'I am feeling sad and',
+        "im not": 'I am feeling sad and',
+        "i am not": 'I am feeling sad and',
+        "don't feel": 'I feel sad and',
+        "dont feel": 'I feel sad and',
+        "can't": 'unable and frustrated',
+        "cant": 'unable and frustrated',
+        "won't": 'unwilling and frustrated',
+        "wont": 'unwilling and frustrated'
+    }
+    
+    # Apply negation transformations
+    for pattern, replacement in negation_patterns.items():
+        if pattern in text_lower:
+            text_lower = text_lower.replace(pattern, replacement)
+    
+    # Handle general negation words that flip meaning
+    negative_indicators = ['not', 'no', 'never', 'nothing', 'nowhere', 'neither', 'none']
+    positive_words = ['happy', 'good', 'great', 'excellent', 'wonderful', 'amazing', 'fantastic', 'awesome']
+    
+    words = text_lower.split()
+    processed_words = []
+    
+    i = 0
+    while i < len(words):
+        word = words[i]
+        # Check if current word is a negation followed by a positive word
+        if word in negative_indicators and i + 1 < len(words):
+            next_word = words[i + 1]
+            if any(pos_word in next_word for pos_word in positive_words):
+                # Replace "not good" type patterns with sad indicators
+                processed_words.extend(['sad', 'unhappy', 'troubled'])
+                i += 2  # Skip the next word since we processed it
+                continue
+        
+        processed_words.append(word)
+        i += 1
+    
+    return ' '.join(processed_words)
+
 @app.route('/mood', methods=['GET', 'POST'])
 @login_required
 def mood():
     if request.method == 'POST':
         mood = request.form['mood']
-        text = mood
-        results = classifier(text)
+        
+        # Preprocess text to handle negations
+        processed_text = preprocess_text_for_emotion(mood)
+        print(f"Original text: {mood}")
+        print(f"Processed text: {processed_text}")
+        
+        results = classifier(processed_text)
         top_emotion = max(results[0], key=lambda x: x['score'])['label']
         print("Detected Emotion:", top_emotion)
         mood_cal = emotion_to_mood.get(top_emotion, 'neutral')
@@ -281,26 +341,253 @@ def mood():
 def blog():
     if request.method == 'POST':
         content = request.form.get('content')
-        if content:
-            post = BlogPost(content=content, user_id=current_user.id)
+        mood = request.form.get('mood')
+        
+        if content and len(content.strip()) >= 10:
+            # Basic crisis detection
+            crisis_keywords = ['suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself']
+            content_lower = content.lower()
+            has_crisis_content = any(keyword in content_lower for keyword in crisis_keywords)
+            
+            if has_crisis_content:
+                flash('We noticed you might be going through a difficult time. Please consider reaching out for support. Your safety matters.', 'warning')
+                # Still allow the post but add a note
+                content += "\n\n[Note: If you're struggling, please reach out to crisis support: 988 (Suicide Prevention Lifeline)]"
+            
+            post = BlogPost(
+                content=content, 
+                mood=mood if mood else 'neutral',
+                user_id=current_user.id
+            )
             db.session.add(post)
             db.session.commit()
             flash('Your story has been shared anonymously!', 'success')
             return redirect(url_for('blog'))
+        else:
+            flash('Please write at least 10 characters to share your story.', 'error')
 
     posts = BlogPost.query.order_by(BlogPost.timestamp.desc()).all()
-    return render_template('blog.html', posts=posts)
+    
+    # Calculate some stats for the template
+    total_comments = db.session.query(db.func.count(Comment.id)).scalar()
+    total_users = db.session.query(db.func.count(User.id)).scalar()
+    
+    return render_template('blog.html', 
+                         posts=posts, 
+                         total_comments=total_comments,
+                         total_users=total_users)
+
+
+@app.route('/blog/<int:post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    """Toggle like for a blog post"""
+    post = BlogPost.query.get_or_404(post_id)
+    
+    if current_user in post.liked_by:
+        # Unlike the post
+        post.liked_by.remove(current_user)
+        post.likes = max(0, post.likes - 1)
+        liked = False
+    else:
+        # Like the post
+        post.liked_by.append(current_user)
+        post.likes += 1
+        liked = True
+    
+    db.session.commit()
+    
+    if request.is_json:
+        return jsonify({
+            'success': True, 
+            'liked': liked, 
+            'like_count': post.likes
+        })
+    
+    return redirect(url_for('blog'))
 
 
 @app.route('/blog/<int:post_id>/comment', methods=['POST'])
 @login_required
 def comment(post_id):
     content = request.form.get('comment')
-    if content:
+    if content and len(content.strip()) >= 1:
         new_comment = Comment(content=content, blog_id=post_id, user_id=current_user.id)
         db.session.add(new_comment)
         db.session.commit()
+        flash('Your comment has been added!', 'success')
     return redirect(url_for('blog'))
+
+
+@app.route('/blog/filter/<mood>')
+@login_required
+def filter_blog_by_mood(mood):
+    """Filter blog posts by mood"""
+    if mood == 'all':
+        posts = BlogPost.query.order_by(BlogPost.timestamp.desc()).all()
+    else:
+        posts = BlogPost.query.filter_by(mood=mood).order_by(BlogPost.timestamp.desc()).all()
+    
+    total_comments = db.session.query(db.func.count(Comment.id)).scalar()
+    total_users = db.session.query(db.func.count(User.id)).scalar()
+    
+    return render_template('blog.html', 
+                         posts=posts, 
+                         total_comments=total_comments,
+                         total_users=total_users,
+                         current_filter=mood)
+
+@app.route('/ai_chat', methods=['GET', 'POST'])
+@login_required
+def ai_chat():
+    """AI Chat interface for users to talk with the AI"""
+    from wtforms import TextAreaField, SubmitField
+    from wtforms.validators import InputRequired, Length
+    
+    class ChatForm(FlaskForm):
+        message = TextAreaField('Message', validators=[InputRequired(), Length(min=1, max=500)])
+        submit = SubmitField('Send')
+    
+    form = ChatForm()
+    conversation = session.get('conversation', [])
+    
+    if form.validate_on_submit():
+        user_message = form.message.data
+        
+        # Get user's recent mood for context
+        recent_mood = Mood.query.filter_by(user_id=current_user.id) \
+                                .order_by(Mood.timestamp.desc()).first()
+        
+        mood_context = recent_mood.mood if recent_mood else None
+        
+        # Generate AI response using the same system as mood submission
+        processed_text = preprocess_text_for_emotion(user_message)
+        
+        # Simple AI response generation
+        ai_response = generate_simple_ai_response(user_message, mood_context)
+        
+        # Add to conversation
+        conversation.append({
+            'user': user_message,
+            'ai': ai_response,
+            'timestamp': request.form.get('timestamp', '')
+        })
+        
+        # Keep only last 10 exchanges
+        if len(conversation) > 10:
+            conversation = conversation[-10:]
+        
+        session['conversation'] = conversation
+        form.message.data = ''  # Clear the form
+        
+    return render_template('ai_chat.html', form=form, conversation=conversation)
+
+def generate_simple_ai_response(user_input, mood=None):
+    """Generate a simple AI response based on user input and mood context"""
+    user_input_lower = user_input.lower()
+    
+    # Crisis detection keywords
+    crisis_keywords = ['suicide', 'kill myself', 'end it all', 'worthless', 'hopeless']
+    if any(keyword in user_input_lower for keyword in crisis_keywords):
+        return """I'm very concerned about what you're sharing. Please reach out for immediate support:
+        
+🆘 National Suicide Prevention Lifeline: 988
+📱 Crisis Text Line: Text HOME to 741741
+🌐 International resources: iasp.info/resources/Crisis_Centres/
+
+You matter, and there are people who want to help you through this difficult time."""
+
+    # Context-aware responses based on mood and keywords
+    if mood == 'sad' or any(word in user_input_lower for word in ['sad', 'depressed', 'down', 'crying']):
+        return """I hear that you're going through a difficult time, and I want you to know that your feelings are completely valid. Sadness is a natural human emotion, and it's okay to feel this way.
+
+Here are some gentle suggestions:
+• Try the "Healing Light Visualization" meditation
+• Reach out to someone you trust
+• Practice self-compassion - treat yourself like you would a good friend
+• Remember that feelings are temporary, even though they feel overwhelming right now
+
+Would you like to talk more about what's contributing to these feelings?"""
+
+    elif mood == 'anxious' or any(word in user_input_lower for word in ['anxious', 'worried', 'stressed', 'panic']):
+        return """Anxiety can feel overwhelming, but you have the strength to work through this. Let's focus on grounding you in the present moment.
+
+Try this right now:
+• Take 3 deep breaths (4 seconds in, 6 seconds out)
+• Name 5 things you can see around you
+• Remember: anxiety is your mind trying to protect you, but you're safe right now
+
+Some techniques that might help:
+• Box breathing (4-4-4-4 pattern)
+• Progressive muscle relaxation
+• The 5-4-3-2-1 grounding technique
+
+What triggered these anxious feelings today?"""
+
+    elif mood == 'angry' or any(word in user_input_lower for word in ['angry', 'mad', 'frustrated', 'irritated']):
+        return """I can sense your frustration, and anger is a valid emotion that often signals something important needs attention. Let's work with this energy constructively.
+
+Immediate relief:
+• Take 10 deep breaths, making your exhale longer than your inhale
+• If possible, do some physical movement (walk, stretch, even punch a pillow safely)
+• Try the "clenched fist release" technique
+
+Questions to consider:
+• What boundary was crossed that triggered this anger?
+• What do you need to feel respected and heard?
+• How can you channel this energy into positive action?
+
+Anger often protects other feelings - what might be underneath it?"""
+
+    elif mood == 'happy' or any(word in user_input_lower for word in ['happy', 'excited', 'great', 'awesome']):
+        return """It's wonderful to hear positive energy from you! 🌟 I love that you're experiencing joy - these moments are so important to savor and appreciate.
+
+Ways to amplify your happiness:
+• Share this positive feeling with someone you care about
+• Write down what's contributing to this joy
+• Take a moment to really feel gratitude for this experience
+• Consider doing something kind for someone else to spread the positivity
+
+Your happiness is contagious! What's been the highlight of your day that's bringing you this joy?"""
+
+    elif any(word in user_input_lower for word in ['thank', 'grateful', 'appreciate']):
+        return """You're so welcome! It means a lot to me that you find our conversations helpful. Your gratitude actually brightens my day too.
+
+Remember:
+• You're doing important work by paying attention to your mental health
+• Every small step toward wellness matters
+• You have more strength than you realize
+
+Is there anything specific you'd like to explore or talk about today?"""
+
+    elif any(word in user_input_lower for word in ['help', 'advice', 'what should']):
+        return """I'm here to support you, and I appreciate you reaching out. The fact that you're asking for help shows wisdom and courage.
+
+To give you the best support, it would help to know:
+• What's your current emotional state?
+• What specific situation or feeling would you like help with?
+• Have you tried any coping strategies recently?
+
+Remember, you're the expert on your own life - I'm just here to offer gentle guidance and remind you of your own inner wisdom. What's on your mind today?"""
+
+    else:
+        return """Thank you for sharing with me. I'm here to listen and support you through whatever you're experiencing.
+
+I notice you're reaching out, which shows self-awareness and courage. Whether you're having a good day or a challenging one, your feelings and experiences matter.
+
+Some gentle questions to consider:
+• How are you feeling right now, both emotionally and physically?
+• What's one thing that went well for you today, even if it was small?
+• Is there anything specific you'd like support with?
+
+I'm here to listen without judgment and offer gentle guidance. What would be most helpful for you right now?"""
+
+@app.route('/clear_chat')
+@login_required
+def clear_chat():
+    """Clear the chat conversation"""
+    session.pop('conversation', None)
+    return redirect(url_for('ai_chat'))
 
 
 if __name__ == '__main__':
