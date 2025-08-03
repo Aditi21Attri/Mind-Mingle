@@ -165,6 +165,129 @@
       50% { opacity: 0.5; }
       100% { opacity: 1; }
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+
+      .main-container {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .form-container, .quote-container {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .mood-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 15px 0;
+      }
+
+      .mood-btn {
+        padding: 12px !important;
+        font-size: 12px !important;
+        text-align: center;
+      }
+
+      .insights-panel {
+        padding: 15px !important;
+      }
+
+      .chart-container {
+        padding: 10px;
+      }
+
+      canvas {
+        margin-top: 20px !important;
+        max-height: 300px;
+      }
+
+      .table-responsive {
+        font-size: 14px;
+      }
+
+      .theme-toggle {
+        top: 10px !important;
+        right: 10px !important;
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 18px !important;
+      }
+
+      .voice-input-btn {
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      .navbar {
+        padding: 10px 15px !important;
+      }
+
+      .navbar-brand {
+        font-size: 18px !important;
+      }
+
+      .nav-link {
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .form-container, .quote-container {
+        padding: 15px;
+      }
+
+      .mood-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .mood-btn {
+        padding: 15px !important;
+        font-size: 14px !important;
+      }
+
+      h2 {
+        font-size: 1.5rem !important;
+      }
+
+      h3 {
+        font-size: 1.3rem !important;
+      }
+
+      .quote-box {
+        padding: 12px;
+        font-size: 14px;
+      }
+
+      .btn {
+        padding: 10px 15px;
+        font-size: 14px;
+      }
+
+      .form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+      }
+
+      .insights-panel h4 {
+        font-size: 1.1rem !important;
+      }
+
+      canvas {
+        max-height: 250px !important;
+      }
+    }
   </style>
 </head>
 <body>

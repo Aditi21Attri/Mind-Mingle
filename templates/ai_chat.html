@@ -182,6 +182,119 @@
             background: #f8f9fa;
             text-decoration: none;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .chat-container {
+                margin: 10px auto;
+                border-radius: 12px;
+            }
+
+            .chat-header {
+                padding: 15px;
+            }
+
+            .chat-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .chat-messages {
+                height: 400px;
+                padding: 15px;
+            }
+
+            .message {
+                margin-bottom: 15px;
+            }
+
+            .user-message {
+                margin-right: 0;
+                margin-left: 20px;
+            }
+
+            .ai-message {
+                margin-left: 0;
+                margin-right: 20px;
+            }
+
+            .chat-input {
+                padding: 15px;
+            }
+
+            .chat-input textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 60px;
+            }
+
+            .navbar {
+                padding: 10px 15px;
+            }
+
+            .navbar-brand {
+                font-size: 18px;
+            }
+
+            .nav-link {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chat-container {
+                margin: 5px;
+                border-radius: 8px;
+            }
+
+            .chat-header {
+                padding: 12px;
+            }
+
+            .chat-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .chat-messages {
+                height: 350px;
+                padding: 10px;
+            }
+
+            .message {
+                margin-bottom: 12px;
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .user-message {
+                margin-left: 10px;
+            }
+
+            .ai-message {
+                margin-right: 10px;
+            }
+
+            .chat-input {
+                padding: 10px;
+            }
+
+            .chat-input .row {
+                margin: 0;
+            }
+
+            .chat-input .col-9,
+            .chat-input .col-3 {
+                padding: 2px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
