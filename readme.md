@@ -283,18 +283,7 @@ We welcome contributions from developers, mental health professionals, and commu
 - **Secure Communications**: HTTPS/TLS 1.3 for all data transmission
 - **Regular Audits**: Monthly security assessments and updates
 
-## 📞 Crisis Resources
 
-**If you're in immediate danger, please contact emergency services.**
-
-### **24/7 Support Lines**
-- **National Suicide Prevention Lifeline**: 988
-- **Crisis Text Line**: Text HOME to 741741
-- **International Association for Suicide Prevention**: https://www.iasp.info/resources/Crisis_Centres/
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
